@@ -1,15 +1,17 @@
 {
   "name": "agent-ia-hotel",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Agent IA pour l'hôtel",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "express": "^5.1.0"
-  }
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "Pascal Queslin",
+  "license": "MIT"
 }
