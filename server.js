@@ -1,56 +1,65 @@
 const express = require('express');
 const axios = require('axios');
+const OpenAI = require('openai');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
-console.log("🔐 TOKEN utilisé :", SLACK_BOT_TOKEN ? "✓ présent" : "❌ manquant");
-console.log("🔐 TOKEN utilisé :", SLACK_BOT_TOKEN);
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
+console.log("🔐 SLACK TOKEN utilisé :", SLACK_BOT_TOKEN ? "✓ présent" : "❌ manquant");
+console.log("🔐 OPENAI KEY utilisée :", OPENAI_API_KEY ? "✓ présente" : "❌ manquante");
+
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 app.use(express.json());
 
 app.post('/slack/events', async (req, res) => {
-  // 1. Répondre au challenge de vérification
   if (req.body.type === 'url_verification') {
-    console.log('✅ Challenge reçu :', req.body.challenge);
     return res.status(200).type('text/plain').send(req.body.challenge);
   }
 
-  // 2. Traiter les événements Slack (ex: mention du bot)
-  if (req.body.event) {
-    const event = req.body.event;
-    console.log('📨 Événement reçu de Slack :', event);
+  if (req.body.event && req.body.event.type === 'app_mention') {
+    const { user, text, channel } = req.body.event;
+    console.log(`📨 Mention de ${user} : ${text}`);
 
-    if (event.type === 'app_mention') {
-      const user = event.user;
-      const channel = event.channel;
-      const text = event.text;
+    try {
+      const aiResponse = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content: `Tu es "Agent IA Hôtel", assistant stratégique de Pascal, chargé d’accompagner les équipes du Grand Hôtel de Serre-Chevalier dans une mission d’organisation, de qualité et d’excellence.
+Ta mission est d’écouter, comprendre, analyser, répondre avec rigueur et intelligence à toute sollicitation sur Slack.
+Tu dois t’exprimer avec professionnalisme, clarté, bienveillance, et une touche d’élégance discrète.
+Adapte toujours ta réponse au ton du message reçu.`
+          },
+          {
+            role: "user",
+            content: text
+          }
+        ],
+        temperature: 0.7
+      });
 
-      console.log(`👋 Mention détectée par ${user} : ${text}`);
+      const message = aiResponse.choices[0].message.content;
+      console.log("🤖 Réponse générée :", message);
 
-      // 3. Répondre automatiquement dans Slack
-      try {
-        const response = await axios.post('https://slack.com/api/chat.postMessage', {
-  channel: event.channel,
-  text: `👋 Hello <@${event.user}> !`
-}, {
-  headers: {
-    Authorization: `Bearer ${SLACK_BOT_TOKEN}`,
-    'Content-Type': 'application/json'
-  }
-});
+      await axios.post('https://slack.com/api/chat.postMessage', {
+        channel,
+        text: message,
+      }, {
+        headers: {
+          Authorization: `Bearer ${SLACK_BOT_TOKEN}`,
+          'Content-Type': 'application/json',
+        }
+      });
 
-console.log("✅ Réponse Slack API :", response.data);
-
-        console.log('✅ Réponse envoyée dans Slack');
-      } catch (error) {
-        console.error('❌ Erreur lors de la réponse Slack :', error.response?.data || error.message);
-      }
+    } catch (error) {
+      console.error("❌ Erreur OpenAI ou Slack :", error.response?.data || error.message);
     }
   }
 
-  // 4. Toujours répondre à Slack avec un 200 OK
   res.status(200).send();
 });
 
