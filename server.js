@@ -1,11 +1,20 @@
 const express = require('express');
-const app = express();
-const PORT = process.env.PORT || 3000;
+require('dotenv').config();
 
-app.get('/', (req, res) => {
-  res.send('🤖 Agent IA Hôtel prêt à répondre !');
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(express.json());
+
+app.post('/slack/events', (req, res) => {
+  if (req.body.type === 'url_verification') {
+    console.log('✅ Challenge reçu :', req.body.challenge);
+    return res.status(200).type('text/plain').send(req.body.challenge);
+  }
+
+  res.status(200).send();
 });
 
-app.listen(PORT, () => {
-  console.log(`Serveur démarré sur le port ${PORT}`);
+app.listen(port, () => {
+  console.log(`✅ Serveur démarré sur le port ${port}`);
 });
