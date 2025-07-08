@@ -25,7 +25,7 @@ app.post('/slack/events', async (req, res) => {
 
     try {
       const aiResponse = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-3.5-turbo",
         messages: [
           {
             role: "system",
