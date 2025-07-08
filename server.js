@@ -14,7 +14,7 @@ app.post('/slack/events', async (req, res) => {
     console.log('✅ Challenge reçu :', req.body.challenge);
     return res.status(200).type('text/plain').send(req.body.challenge);
   }
-
+console.log("📩 Requête Slack reçue :", JSON.stringify(req.body, null, 2));
   // 2. Traiter les événements Slack (ex: mention du bot)
   if (req.body.event) {
     const event = req.body.event;
