@@ -5,6 +5,7 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3000;
 const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
+console.log("🔐 TOKEN utilisé :", SLACK_BOT_TOKEN);
 
 app.use(express.json());
 
